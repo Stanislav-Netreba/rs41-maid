@@ -109,6 +109,8 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
       </body>
     </html>
   `;
+		await page.waitForSelector(selector, { visible: true });
+
 		const tempDir = path.resolve(__dirname, '../temp');
 		if (!fs.existsSync(tempDir)) {
 			fs.mkdirSync(tempDir, { recursive: true });
