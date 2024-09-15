@@ -1,5 +1,4 @@
 const discordService = require('./src/services/discordService');
-const scrapeSchedule = require('./src/services/scheduleScraper');
 const TelegramService = require('./src/services/telegramService');
 const generateImageBuffer = require('./src/services/scheduleService');
 
