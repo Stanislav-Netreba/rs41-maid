@@ -12,8 +12,9 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
 	const browser = await puppeteer.launch({
 		args: ['--no-sandbox', '--disable-setuid-sandbox'],
-		headless: false, // Temporarily run in non-headless mode
+		headless: true,
 	});
+
 	const page = await browser.newPage();
 
 	// Set viewport size
