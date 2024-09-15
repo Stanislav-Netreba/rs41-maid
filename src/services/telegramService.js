@@ -8,6 +8,62 @@ class TelegramService {
 		this.bot = new TelegramBot(telegramToken, { polling: true });
 		this.discordService = discordService;
 		this.scrapeSchedule = scrapeSchedule;
+		this.commandHandlers = {
+			'/start': async (msg, chatId) => {
+				await this.bot.sendMessage(
+					chatId,
+					'Фіот підари, хімікі підари, згурич підар, ксу іді нахуй, турчин топ 1 фембой світу'
+				);
+			},
+			'/schedule': async (msg, chatId) => {
+				let schedule = await this.scrapeSchedule();
+
+				const week = new Date().getWeek() % 2 == 0;
+
+				let currentSchedule = schedule[+week];
+
+				const table = new AsciiTable(`Розклад на цей(${week ? 'Перший' : 'Другий'}) тиждень`);
+				currentSchedule.forEach((dayEl, index) => {
+					let row = [];
+					timeArray.forEach((el) => {
+						if (index == 0) {
+							dayEl[el] = dayEl[el]?.slice(1);
+						}
+						row.push(dayEl[el]?.slice(0, 10) || '');
+					});
+					table.addRow(...row);
+				});
+
+				await this.bot.sendMessage(chatId, `\n\`\`\`\n${table.toString()}\`\`\``, { parse_mode: 'MarkdownV2' });
+			},
+			'/today': async (msg, chatId) => {
+				let schedule = await this.scrapeSchedule();
+
+				const day = new Date().getDay();
+				const week = new Date().getWeek() % 2 == 0;
+
+				const isScheduled = day !== 0 && schedule[week % 2 ^ 1][day];
+				let currentSchedule = isScheduled ? schedule[+week][day] : schedule[+week ^ 1][1];
+
+				let table = new AsciiTable(`Розклад на ${dayOfWeek[day]}`);
+
+				table.setHeading(...timeArray);
+
+				let row = [];
+
+				timeArray.forEach((el) => {
+					row.push(currentSchedule[el]?.slice(0, 10) || '');
+				});
+
+				table.addRow(...row);
+
+				let answer = isScheduled
+					? `\n\`\`\`\n${table.toString()}\`\`\``
+					: `Сьогодні вихідний, ось розклад на понеділок:\n\`\`\`\n${table.toString()}\`\`\``;
+
+				await this.bot.sendMessage(chatId, answer, { parse_mode: 'MarkdownV2' });
+			},
+		};
 	}
 
 	init() {
@@ -51,62 +107,15 @@ class TelegramService {
 			await this.discordService.sendFullPostToDiscord(postContent, mediaFiles);
 		});
 	}
+
 	commands() {
-		this.bot.on('message', async (msg) => {
+		this.bot.onText(/\/([a-zA-Z0-9]+)(?: (.+))?/, (msg, match) => {
+			const command = `/${match[1]}`;
+			const param = match[2];
 			const chatId = msg.chat.id;
-			const text = msg.text || '';
 
-			if (text === '/start') {
-				await this.bot.sendMessage(
-					chatId,
-					'Фіот підари, хімікі підари, згурич підар, ксу іді нахуй, турчин топ 1 фембой світу'
-				);
-			} else if (text === '/schedule') {
-				let schedule = await this.scrapeSchedule();
-
-				const week = new Date().getWeek() % 2 == 0;
-
-				let currentSchedule = schedule[+week];
-
-				const table = new AsciiTable(`Розклад на цей(${week ? 'Перший' : 'Другий'}) тиждень`);
-				currentSchedule.forEach((dayEl, index) => {
-					let row = [];
-					timeArray.forEach((el) => {
-						if (index == 0) {
-							dayEl[el] = dayEl[el]?.slice(1);
-						}
-						row.push(dayEl[el]?.slice(0, 10) || '');
-					});
-					table.addRow(...row);
-				});
-
-				await this.bot.sendMessage(chatId, `\n\`\`\`\n${table.toString()}\`\`\``, { parse_mode: 'MarkdownV2' });
-			} else if (text === '/today') {
-				let schedule = await this.scrapeSchedule();
-
-				const day = new Date().getDay();
-				const week = new Date().getWeek() % 2 == 0;
-
-				const isScheduled = day !== 0 && schedule[week % 2 ^ 1][day];
-				let currentSchedule = isScheduled ? schedule[+week][day] : schedule[+week ^ 1][1];
-
-				let table = new AsciiTable(`Розклад на ${dayOfWeek[day]}`);
-
-				table.setHeading(...timeArray);
-
-				let row = [];
-
-				timeArray.forEach((el) => {
-					row.push(currentSchedule[el]?.slice(0, 10) || '');
-				});
-
-				table.addRow(...row);
-
-				let answer = isScheduled
-					? `\n\`\`\`\n${table.toString()}\`\`\``
-					: `Сьогодні вихідний, ось розклад на понеділок:\n\`\`\`\n${table.toString()}\`\`\``;
-
-				await this.bot.sendMessage(chatId, answer, { parse_mode: 'MarkdownV2' });
+			if (this.commandHandlers[command]) {
+				this.commandHandlers[command](msg, chatId, param ? [command, param] : [command]);
 			}
 		});
 	}
