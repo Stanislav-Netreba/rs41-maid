@@ -1,3 +1,14 @@
+const puppeteer = require('puppeteer');
+const { schedulesUrl } = require('../utils/config');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainContent_SecondScheduleTable > tbody'];
+/**
+ * Takes a screenshot of a specific element on a webpage and returns the file path.
+ * @param {number} weekNumber - The index of the schedule to capture (1 or 2).
+ * @returns {Promise<string>} - A promise that resolves with the path to the temporary image file.
+ */
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
 	const browser = await puppeteer.launch({
 		args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -56,3 +67,5 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
 		await browser.close();
 	}
 }
+
+module.exports = captureScheduleScreenshot;
