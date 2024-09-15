@@ -12,9 +12,8 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
 	const browser = await puppeteer.launch({
 		args: ['--no-sandbox', '--disable-setuid-sandbox'],
-		headless: true,
+		headless: false, // Temporarily run in non-headless mode
 	});
-
 	const page = await browser.newPage();
 
 	// Set viewport size
@@ -46,10 +45,70 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
 			dayOfWeek
 		);
 
-		// Create HTML content
-		const content = `...`; // Use the same HTML content as in your script
-
-		// Create temp directory if not exists
+		// Створюємо HTML контент для скріншота
+		const content = `
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0e0e0;
+          }
+          div {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background-color: #ffffff;
+            margin: 20px auto;
+            max-width: 1200px;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0;
+          }
+          th, td {
+            border: 1px solid #dddddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 15px;
+            transition: background-color 0.3s;
+          }
+          th {
+            background-color: #007bff;
+            color: #ffffff;
+            font-weight: 600;
+          }
+          tr:nth-child(even) {
+            background-color: #f9f9f9;
+          }
+          tr:hover {
+            background-color: #f1f1f1;
+          }
+          a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+          }
+          a:hover {
+            text-decoration: underline;
+          }
+          @media (max-width: 768px) {
+            th, td {
+              font-size: 13px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div>
+          <table>${elementsHTML}</table>
+        </div>
+      </body>
+    </html>
+  `;
 		const tempDir = path.resolve(__dirname, '../temp');
 		if (!fs.existsSync(tempDir)) {
 			fs.mkdirSync(tempDir, { recursive: true });
