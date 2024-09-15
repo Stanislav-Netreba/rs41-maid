@@ -12,6 +12,7 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
 	const browser = await puppeteer.launch({
 		executablePath: '/usr/bin/chromium-browser',
+		args: ['--no-sandbox', '--disable-setuid-sandbox'],
 	});
 	const page = await browser.newPage();
 
