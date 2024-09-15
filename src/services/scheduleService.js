@@ -10,10 +10,8 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
  * @returns {Promise<string>} - A promise that resolves with the path to the temporary image file.
  */
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
-	const browser = await puppeteer.launch();
+	const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 	const page = await browser.newPage();
-	// dayOfWeek = dayOfWeek == 0 ? 1 : dayOfWeek;
-	console.log([[(dayOfWeek - 1) * 7, dayOfWeek * 7]]);
 
 	// Налаштовуємо viewport
 	await page.setViewport({ width: 1280, height: 520 });
