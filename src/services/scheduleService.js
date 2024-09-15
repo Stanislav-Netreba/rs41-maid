@@ -46,7 +46,6 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
 			dayOfWeek
 		);
 
-		const tempFilePath = `../temp/schedule_${weekNumber}.png`;
 		// Створюємо HTML контент для скріншота
 		const content = `
     <html>
@@ -111,6 +110,11 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
       </body>
     </html>
   `;
+		const tempDir = path.resolve(__dirname, '../temp');
+		if (!fs.existsSync(tempDir)) {
+			fs.mkdirSync(tempDir, { recursive: true });
+		}
+		const tempFilePath = path.join(tempDir, `schedule_${weekNumber}.png`);
 
 		await page.setContent(content, { waitUntil: 'networkidle2' });
 		await page.screenshot({ path: tempFilePath, fullPage: true });
