@@ -1,6 +1,7 @@
 const discordService = require('./src/services/discordService');
 const scrapeSchedule = require('./src/services/scheduleScraper');
 const TelegramService = require('./src/services/telegramService');
+const generateImageBuffer = require('./src/services/scheduleService');
 
 Date.prototype.getWeek = function () {
 	var date = new Date(this.getTime());
@@ -14,7 +15,7 @@ async function startBot() {
 	try {
 		await discordService.init();
 		console.log('Discord bot started');
-		const telegramService = new TelegramService(discordService, scrapeSchedule);
+		const telegramService = new TelegramService(discordService, generateImageBuffer);
 		telegramService.init();
 		console.log('Telegram bot started');
 		telegramService.commands();

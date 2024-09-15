@@ -1,13 +1,14 @@
-// src/services/telegramService.js
 const TelegramBot = require('node-telegram-bot-api');
-const AsciiTable = require('ascii-table');
-const { telegramToken, dayOfWeek, timeArray } = require('../utils/config');
+const { telegramToken } = require('../utils/config');
+const fs = require('fs');
+const path = require('path');
 
 class TelegramService {
-	constructor(discordService, scrapeSchedule) {
+	constructor(discordService, generateImageBuffer) {
 		this.bot = new TelegramBot(telegramToken, { polling: true });
 		this.discordService = discordService;
-		this.scrapeSchedule = scrapeSchedule;
+		this.generateImageBuffer = generateImageBuffer;
+
 		this.commandHandlers = {
 			'/start': async (msg, chatId) => {
 				await this.bot.sendMessage(
@@ -16,52 +17,60 @@ class TelegramService {
 				);
 			},
 			'/schedule': async (msg, chatId) => {
-				let schedule = await this.scrapeSchedule();
+				const week = new Date().getWeek() % 2 === 0 ? 1 : 2;
 
-				const week = new Date().getWeek() % 2 == 0;
+				try {
+					const filePath = await this.generateImageBuffer(week, true);
+					await this.bot.sendPhoto(chatId, filePath, { caption: 'Here is your schedule!' });
 
-				let currentSchedule = schedule[+week];
-
-				const table = new AsciiTable(`Розклад на цей(${week ? 'Перший' : 'Другий'}) тиждень`);
-				currentSchedule.forEach((dayEl, index) => {
-					let row = [];
-					timeArray.forEach((el) => {
-						if (index == 0) {
-							dayEl[el] = dayEl[el]?.slice(1);
+					// Delete the temporary file after sending it
+					fs.unlink(filePath, (err) => {
+						if (err) {
+							console.error('Error deleting temp file:', err);
 						}
-						row.push(dayEl[el]?.slice(0, 10) || '');
 					});
-					table.addRow(...row);
-				});
-
-				await this.bot.sendMessage(chatId, `\n\`\`\`\n${table.toString()}\`\`\``, { parse_mode: 'MarkdownV2' });
+				} catch (error) {
+					console.error('Error sending schedule photo:', error);
+					await this.bot.sendMessage(chatId, 'An error occurred while sending the schedule.');
+				}
 			},
 			'/today': async (msg, chatId) => {
-				let schedule = await this.scrapeSchedule();
-
 				const day = new Date().getDay();
 				const week = new Date().getWeek() % 2 == 0;
 
-				const isScheduled = day !== 0 && schedule[week % 2 ^ 1][day];
-				let currentSchedule = isScheduled ? schedule[+week][day] : schedule[+week ^ 1][1];
+				try {
+					const filePath = await this.generateImageBuffer(week, false, day);
+					await this.bot.sendPhoto(chatId, filePath, { caption: 'Here is your schedule!' });
 
-				let table = new AsciiTable(`Розклад на ${dayOfWeek[day]}`);
+					// Delete the temporary file after sending it
+					fs.unlink(filePath, (err) => {
+						if (err) {
+							console.error('Error deleting temp file:', err);
+						}
+					});
+				} catch (error) {
+					console.error('Error sending schedule photo:', error);
+					await this.bot.sendMessage(chatId, 'An error occurred while sending the schedule.');
+				}
 
-				table.setHeading(...timeArray);
+				// const isScheduled = day !== 0 && schedule[week % 2 ^ 1][day];
+				// let currentSchedule = isScheduled ? schedule[+week][day] : schedule[+week ^ 1][1];
 
-				let row = [];
+				// let table = new AsciiTable(`Розклад на ${dayOfWeek[day]}`);
+				// table.setHeading(...timeArray);
 
-				timeArray.forEach((el) => {
-					row.push(currentSchedule[el]?.slice(0, 10) || '');
-				});
+				// let row = [];
+				// timeArray.forEach((el) => {
+				// 	row.push(currentSchedule[el]?.slice(0, 10) || '');
+				// });
 
-				table.addRow(...row);
+				// table.addRow(...row);
 
-				let answer = isScheduled
-					? `\n\`\`\`\n${table.toString()}\`\`\``
-					: `Сьогодні вихідний, ось розклад на понеділок:\n\`\`\`\n${table.toString()}\`\`\``;
+				// let answer = isScheduled
+				// 	? `\n\`\`\`\n${table.toString()}\`\`\``
+				// 	: `Сьогодні вихідний, ось розклад на понеділок:\n\`\`\`\n${table.toString()}\`\`\``;
 
-				await this.bot.sendMessage(chatId, answer, { parse_mode: 'MarkdownV2' });
+				// await this.bot.sendMessage(chatId, answer, { parse_mode: 'MarkdownV2' });
 			},
 		};
 	}
