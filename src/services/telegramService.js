@@ -20,7 +20,7 @@ class TelegramService {
 
 				try {
 					const filePath = await this.generateImageSchedule(week, true);
-					await this.bot.sendPhoto(chatId, filePath, { caption: 'Here is your schedule!' });
+					await this.bot.sendPhoto(chatId, filePath);
 
 					// Delete the temporary file after sending it
 					fs.unlink(filePath, (err) => {
@@ -39,7 +39,7 @@ class TelegramService {
 
 				try {
 					const filePath = await this.generateImageSchedule(week, false, day);
-					await this.bot.sendPhoto(chatId, filePath, { caption: 'Here is your schedule!' });
+					await this.bot.sendPhoto(chatId, filePath);
 
 					// Delete the temporary file after sending it
 					fs.unlink(filePath, (err) => {
