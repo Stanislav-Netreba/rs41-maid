@@ -10,7 +10,9 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
  * @returns {Promise<string>} - A promise that resolves with the path to the temporary image file.
  */
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
-	const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+	const browser = await puppeteer.launch({
+		executablePath: '/usr/bin/chromium-browser',
+	});
 	const page = await browser.newPage();
 
 	// Налаштовуємо viewport
@@ -119,34 +121,6 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
 	} finally {
 		await browser.close();
 	}
-	// if (![1, 2].includes(weekNumber)) {
-	// 	throw new Error('Invalid weekNumber. Must be 1 or 2.');
-	// }
-	// const browser = await puppeteer.launch({ headless: true });
-	// const page = await browser.newPage();
-	// const tempFilePath = path.join(os.tmpdir(), `schedule_${weekNumber}.png`);
-	// console.log(weekNumber);
-	// try {
-	// 	await page.goto(schedulesUrl, { waitUntil: 'networkidle2' });
-	// 	const elements = ['#ctl00_MainContent_FirstScheduleTable', '#ctl00_MainContent_SecondScheduleTable'];
-	// 	const elementSelector = elements[weekNumber];
-	// 	if (!elementSelector) {
-	// 		throw new Error('Invalid selector for the given weekNumber.');
-	// 	}
-	// 	const element = await page.$(elementSelector);
-	// 	if (element) {
-	// 		// Capture screenshot and save to a temporary file
-	// 		await element.screenshot({ path: tempFilePath });
-	// 		return tempFilePath;
-	// 	} else {
-	// 		throw new Error('Element not found on the page');
-	// 	}
-	// } catch (error) {
-	// 	console.error('Error capturing screenshot:', error);
-	// 	throw error; // Rethrow error to be handled by the caller
-	// } finally {
-	// 	await browser.close();
-	// }
 }
 
 module.exports = captureScheduleScreenshot;
