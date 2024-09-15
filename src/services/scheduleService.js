@@ -11,7 +11,7 @@ const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainC
  */
 async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
 	const browser = await puppeteer.launch({
-		executablePath: '/usr/bin/chromium-browser',
+		//executablePath: '/usr/bin/chromium-browser',
 		args: ['--no-sandbox', '--disable-setuid-sandbox'],
 	});
 	const page = await browser.newPage();
@@ -46,7 +46,7 @@ async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek 
 			dayOfWeek
 		);
 
-		const tempFilePath = path.join(os.tmpdir(), `../temp/schedule_${weekNumber}.png`);
+		const tempFilePath = `../temp/schedule_${weekNumber}.png`;
 		// Створюємо HTML контент для скріншота
 		const content = `
     <html>
