@@ -1,8 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { schedulesUrl } = require('../utils/config');
-
-const time = ['День', '08:30', '10:25', '12:20', '14:15', '16:10', '18:30'];
+const { schedulesUrl, timeArray } = require('../utils/config');
 
 async function scrapeScheduleFunc(scheduleId) {
 	try {
@@ -33,7 +31,7 @@ async function scrapeScheduleFunc(scheduleId) {
 			const obj = {};
 			column.forEach((el, idx) => {
 				if (!el) return;
-				obj[time[idx]] = el;
+				obj[timeArray[idx]] = el;
 			});
 			return obj;
 		});

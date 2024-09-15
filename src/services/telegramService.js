@@ -1,6 +1,7 @@
 // src/services/telegramService.js
 const TelegramBot = require('node-telegram-bot-api');
-const { telegramToken } = require('../utils/config');
+const AsciiTable = require('ascii-table');
+const { telegramToken, dayOfWeek, timeArray } = require('../utils/config');
 
 class TelegramService {
 	constructor(discordService, scrapeSchedule) {
@@ -63,18 +64,49 @@ class TelegramService {
 			} else if (text === '/schedule') {
 				let schedule = await this.scrapeSchedule();
 
-				const week = new Date().getWeek();
-				schedule = week % 2 ? schedule[0] : schedule[1];
+				const week = new Date().getWeek() % 2 == 0;
 
-				await this.bot.sendMessage(chatId, `Here is the schedule:\n\n ${JSON.stringify(schedule, null, 2)}`);
+				let currentSchedule = schedule[+week];
+
+				const table = new AsciiTable(`Розклад на цей(${week ? 'Перший' : 'Другий'}) тиждень`);
+				currentSchedule.forEach((dayEl, index) => {
+					let row = [];
+					timeArray.forEach((el) => {
+						if (index == 0) {
+							dayEl[el] = dayEl[el]?.slice(1);
+						}
+						row.push(dayEl[el]?.slice(0, 10) || '');
+					});
+					table.addRow(...row);
+				});
+
+				await this.bot.sendMessage(chatId, `\n\`\`\`\n${table.toString()}\`\`\``, { parse_mode: 'MarkdownV2' });
 			} else if (text === '/today') {
 				let schedule = await this.scrapeSchedule();
 
 				const day = new Date().getDay();
-				const week = new Date().getWeek();
-				schedule = week % 2 ? schedule[0] : schedule[1];
+				const week = new Date().getWeek() % 2 == 0;
 
-				await this.bot.sendMessage(chatId, `${JSON.stringify(schedule[day], null, 4)}`);
+				const isScheduled = day !== 0 && schedule[week % 2 ^ 1][day];
+				let currentSchedule = isScheduled ? schedule[+week][day] : schedule[+week ^ 1][1];
+
+				let table = new AsciiTable(`Розклад на ${dayOfWeek[day]}`);
+
+				table.setHeading(...timeArray);
+
+				let row = [];
+
+				timeArray.forEach((el) => {
+					row.push(currentSchedule[el]?.slice(0, 10) || '');
+				});
+
+				table.addRow(...row);
+
+				let answer = isScheduled
+					? `\n\`\`\`\n${table.toString()}\`\`\``
+					: `Сьогодні вихідний, ось розклад на понеділок:\n\`\`\`\n${table.toString()}\`\`\``;
+
+				await this.bot.sendMessage(chatId, answer, { parse_mode: 'MarkdownV2' });
 			}
 		});
 	}
