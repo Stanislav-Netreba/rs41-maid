@@ -17,6 +17,7 @@
     "discord.js": "^14.16.2",
     "dotenv": "^16.4.5",
     "fs": "^0.0.1-security",
+    "jsdom": "^25.0.0",
     "node-telegram-bot-api": "^0.63.0",
     "path": "^0.12.7",
     "puppeteer": "^23.3.0",

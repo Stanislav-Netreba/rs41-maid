@@ -3,10 +3,11 @@ const { telegramToken } = require('../utils/config');
 const fs = require('fs');
 
 class TelegramService {
-	constructor(discordService, generateImageSchedule) {
+	constructor(discordService, generateImageSchedule, scheduleScraper) {
 		this.bot = new TelegramBot(telegramToken, { polling: true });
 		this.discordService = discordService;
 		this.generateImageSchedule = generateImageSchedule;
+		this.scheduleScraper = scheduleScraper;
 
 		this.commandHandlers = {
 			'/start': async (msg, chatId) => {
@@ -18,12 +19,18 @@ class TelegramService {
 			'/schedule': async (msg, chatId) => {
 				const week = new Date().getWeek() % 2 === 0 ? 1 : 2;
 
-				try {
-					const filePath = await this.generateImageSchedule(week, true);
-					await this.bot.sendPhoto(chatId, filePath);
+				let schedule = await this.scheduleScraper();
+				let currentSchedule = schedule[+week];
 
-					// Delete the temporary file after sending it
-					fs.unlink(filePath, (err) => {
+				try {
+					let filePath = await this.generateImageSchedule(currentSchedule);
+					console.log('./src/temp/' + filePath);
+
+					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
+						contentType: 'image/png',
+					});
+
+					fs.unlink('./src/temp/' + filePath, (err) => {
 						if (err) {
 							console.error('Error deleting temp file:', err);
 						}
@@ -32,17 +39,38 @@ class TelegramService {
 					console.error('Error sending schedule photo:', error);
 					await this.bot.sendMessage(chatId, 'An error occurred while sending the schedule.');
 				}
+
+				// try {
+				// 	const filePath = await this.generateImageSchedule(week, true);
+				// 	await this.bot.sendPhoto(chatId, filePath);
+
+				// 	// Delete the temporary file after sending it
+				// 	fs.unlink(filePath, (err) => {
+				// 		if (err) {
+				// 			console.error('Error deleting temp file:', err);
+				// 		}
+				// 	});
+				// } catch (error) {
+				// 	console.error('Error sending schedule photo:', error);
+				// 	await this.bot.sendMessage(chatId, 'An error occurred while sending the schedule.');
+				// }
 			},
 			'/today': async (msg, chatId) => {
 				const day = new Date().getDay();
 				const week = new Date().getWeek() % 2 == 0;
 
-				try {
-					const filePath = await this.generateImageSchedule(week, false, day);
-					await this.bot.sendPhoto(chatId, filePath);
+				let schedule = await this.scheduleScraper();
+				let currentSchedule = schedule[+week];
 
-					// Delete the temporary file after sending it
-					fs.unlink(filePath, (err) => {
+				try {
+					let filePath = await this.generateImageSchedule([currentSchedule[day]]);
+					console.log('./src/temp/' + filePath);
+
+					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
+						contentType: 'image/png',
+					});
+
+					fs.unlink('./src/temp/' + filePath, (err) => {
 						if (err) {
 							console.error('Error deleting temp file:', err);
 						}

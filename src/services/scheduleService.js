@@ -1,131 +1,134 @@
-const puppeteer = require('puppeteer');
-const { schedulesUrl } = require('../utils/config');
+const { timeArray } = require('../utils/config');
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const elements = ['#ctl00_MainContent_FirstScheduleTable > tbody', '#ctl00_MainContent_SecondScheduleTable > tbody'];
-/**
- * Takes a screenshot of a specific element on a webpage and returns the file path.
- * @param {number} weekNumber - The index of the schedule to capture (1 or 2).
- * @returns {Promise<string>} - A promise that resolves with the path to the temporary image file.
- */
-async function captureScheduleScreenshot(weekNumber, fullWeek = true, dayOfWeek = null) {
-	const browser = await puppeteer.launch({
-		args: ['--no-sandbox', '--disable-setuid-sandbox'],
-		headless: false, // Temporarily run in non-headless mode
-	});
-	const page = await browser.newPage();
+const { createCanvas } = require('canvas');
 
-	// Set viewport size
-	await page.setViewport({ width: 1280, height: 1024 });
+async function drawScheduleTable(scheduleArray) {
+	// Часи, які потрібно включити у таблицю
+	const times = timeArray.slice(1);
 
-	try {
-		let url = schedulesUrl;
-		if (!fullWeek) url += '&mobile=true';
-		await page.goto(url, { waitUntil: 'networkidle2' });
+	// Заголовок з часами
+	const header = ['#', ...times];
 
-		// Wait for the element to be present
-		const selector = elements[+weekNumber];
-		await page.waitForSelector(selector, { visible: true });
+	// Функція для створення таблиці
+	function convertSchedule(schedule) {
+		const result = [header];
+		if (schedule.length > 1) schedule = schedule.slice(1);
+		schedule.forEach((daySchedule) => {
+			const row = [daySchedule['День']];
 
-		// Get the HTML content
-		const elementsHTML = await page.evaluate(
-			(selector, fullWeek, dayOfWeek) => {
-				const parent = document.querySelector(selector);
-				if (!parent) return '';
-				const startIndex = fullWeek ? 0 : (dayOfWeek - 1) * 7;
-				const endIndex = fullWeek ? 7 : dayOfWeek * 7;
-				return Array.from(parent.children)
-					.slice(startIndex, endIndex)
-					.map((el) => el.outerHTML)
-					.join('');
-			},
-			selector,
-			fullWeek,
-			dayOfWeek
-		);
+			times.forEach((time) => {
+				const cellValue = daySchedule[time] || '';
+				const formattedValue = cellValue
+					.replace(/\s?Частина \d\./g, '') // Прибираємо "Частина X."
+					.replace(/\s?\(.*?\)/g, '') // Прибираємо текст у дужках
+					.replace(/\d{3}-\d{2}/g, '') // Прибираємо номери аудиторій
+					.trim()
+					.replace(/\s+/g, ' '); // Переносимо текст на нові рядки
 
-		// Створюємо HTML контент для скріншота
-		const content = `
-    <html>
-      <head>
-        <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #e0e0e0;
-          }
-          div {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            background-color: #ffffff;
-            margin: 20px auto;
-            max-width: 1200px;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 0;
-          }
-          th, td {
-            border: 1px solid #dddddd;
-            padding: 12px;
-            text-align: left;
-            font-size: 15px;
-            transition: background-color 0.3s;
-          }
-          th {
-            background-color: #007bff;
-            color: #ffffff;
-            font-weight: 600;
-          }
-          tr:nth-child(even) {
-            background-color: #f9f9f9;
-          }
-          tr:hover {
-            background-color: #f1f1f1;
-          }
-          a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-          }
-          a:hover {
-            text-decoration: underline;
-          }
-          @media (max-width: 768px) {
-            th, td {
-              font-size: 13px;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div>
-          <table>${elementsHTML}</table>
-        </div>
-      </body>
-    </html>
-  `;
-		const tempDir = path.resolve(__dirname, '../temp');
-		if (!fs.existsSync(tempDir)) {
-			fs.mkdirSync(tempDir, { recursive: true });
-		}
-		const tempFilePath = path.join(tempDir, `schedule_${weekNumber}.png`);
+				row.push(formattedValue);
+			});
 
-		// Set content and take screenshot
-		await page.setContent(content, { waitUntil: 'networkidle2' });
-		await page.screenshot({ path: tempFilePath, fullPage: true });
+			result.push(row);
+		});
 
-		return tempFilePath;
-	} catch (error) {
-		console.error('Error capturing screenshot:', error);
-		throw error;
-	} finally {
-		await browser.close();
+		return result;
 	}
+
+	const formattedSchedule = convertSchedule(scheduleArray);
+
+	return drawFunc(formattedSchedule);
 }
 
-module.exports = captureScheduleScreenshot;
+async function drawFunc(tableData) {
+	const fontSize = 24; // Збільшений розмір шрифту
+	const font = `${fontSize}px Segoe UI`;
+	const cellPadding = 20; // Більший відступ
+	const cellHeight = 250; // Збільшена висота клітинки
+	const cellWidth = 350; // Збільшена ширина клітинки
+	const headerHeight = 70; // Висота заголовка
+	const tableWidth = cellWidth * tableData[0].length; // Ширина для годин + дні тижня
+	const tableHeight = headerHeight + cellHeight * (tableData.length - 1); // Висота для днів тижня
+
+	// Створення полотна
+	const canvas = createCanvas(tableWidth, tableHeight);
+	const ctx = canvas.getContext('2d');
+
+	// Стилі таблиці
+	ctx.fillStyle = '#ffffff';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	ctx.font = font;
+	ctx.textBaseline = 'top'; // Центрація по вертикалі
+
+	// Функція для малювання тексту в клітинках з перенесенням рядків та вирівнюванням по центру
+	function drawText(text, x, y, width, height) {
+		const words = text.split(' ');
+		let line = '';
+		const lineHeight = fontSize * 1.2;
+		const lines = [];
+
+		for (let n = 0; n < words.length; n++) {
+			const testLine = line + words[n] + ' ';
+			const metrics = ctx.measureText(testLine);
+			const testWidth = metrics.width;
+
+			if (testWidth > width - cellPadding * 2 && n > 0) {
+				lines.push(line);
+				line = words[n] + ' ';
+			} else {
+				line = testLine;
+			}
+		}
+		lines.push(line);
+
+		// Початкові координати Y для верхнього кута
+		let startY = y + cellPadding;
+
+		for (const line of lines) {
+			ctx.fillText(line, x + cellPadding, startY); // Вирівнювання по лівому краю
+			startY += lineHeight;
+		}
+	}
+
+	// Малювання таблиці
+	function drawTable(data) {
+		// Малювання заголовка таблиці (години)
+		ctx.fillStyle = '#007bff';
+		ctx.fillRect(0, 0, canvas.width, headerHeight);
+		ctx.fillStyle = '#ffffff';
+		ctx.textAlign = 'left'; // Центрація тексту по горизонталі
+
+		for (let i = 0; i < data[0].length; i++) {
+			const text = data[0][i];
+			const x = i * cellWidth;
+			drawText(text, x, 0, cellWidth, headerHeight);
+		}
+
+		// Малювання рядків таблиці (дні тижня)
+		for (let row = 1; row < data.length; row++) {
+			for (let col = 0; col < data[row].length; col++) {
+				const text = data[row][col];
+				const x = col * cellWidth;
+				const y = headerHeight + (row - 1) * cellHeight;
+
+				// Стилізація клітинок
+				ctx.fillStyle = row % 2 === 0 ? '#f9f9f9' : '#ffffff';
+				ctx.fillRect(x, y, cellWidth, cellHeight);
+				ctx.strokeStyle = '#dddddd';
+				ctx.strokeRect(x, y, cellWidth, cellHeight);
+
+				ctx.fillStyle = '#000000';
+				drawText(text, x, y, cellWidth, cellHeight);
+			}
+		}
+	}
+
+	// Виклик функції для малювання таблиці
+	drawTable(tableData);
+	const buffer = canvas.toBuffer('image/png');
+	const fileName = `tempImg_${Date.now()}.png`;
+	fs.writeFileSync(`./src/temp/${fileName}`, buffer);
+
+	return fileName;
+}
+
+module.exports = drawScheduleTable;
