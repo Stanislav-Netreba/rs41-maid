@@ -65,13 +65,6 @@ class TelegramService {
 					await this.bot.sendMessage(chatId, 'An error occurred while sending the schedule.');
 				}
 			},
-			'/pashalko': async (msg, chatId) => {
-				await this.bot.sendMessage(
-					chatId,
-					'єбать цих [персон](https://uk.wikipedia.org/wiki/Національні_меншини_в_Україні)',
-					{ parse_mode: 'MarkdownV2' }
-				);
-			},
 		};
 	}
 
