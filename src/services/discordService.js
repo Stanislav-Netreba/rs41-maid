@@ -38,7 +38,7 @@ class DiscordService {
 		}
 
 		let messageContent = `##Новий пост тг:`;
-		messageContent += content ? ` \`\`\`${content}\`\`\` ` : '';
+		messageContent += content ? `\n${content}` : '';
 		await channel.send({
 			content: messageContent,
 			files: attachments,
