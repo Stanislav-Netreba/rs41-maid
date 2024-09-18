@@ -37,7 +37,7 @@ class DiscordService {
 			});
 		}
 
-		let messageContent = `##Новий пост тг:`;
+		let messageContent = `## Новий пост тг:`;
 		messageContent += content ? `\n${content}` : '';
 		await channel.send({
 			content: messageContent,
