@@ -37,8 +37,10 @@ class DiscordService {
 			});
 		}
 
+		let messageContent = `##Новий пост тг:`;
+		messageContent += content ? ` \`\`\`${content}\`\`\` ` : '';
 		await channel.send({
-			content: `**New post from Telegram**\n\n \`\`\`${content}\`\`\`` || 'New post from Telegram',
+			content: messageContent,
 			files: attachments,
 		});
 
