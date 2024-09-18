@@ -21,10 +21,9 @@ async function drawScheduleTable(scheduleArray) {
 				const formattedValue = cellValue
 					.replace(/\s?Частина \d\./g, '') // Прибираємо "Частина X."
 					.replace(/\s?\(.*?\)/g, '') // Прибираємо текст у дужках
-					.replace(/\d{3}-\d{2}/g, '') // Прибираємо номери аудиторій
+					.replace(/(\d{3}-\d{2})/g, '\n$1') // Додаємо перенос перед номером аудиторії
 					.trim()
-					.replace(/\s+/g, ' '); // Переносимо текст на нові рядки
-
+					.replace(/\s+/g, ' '); // Очищаємо зайві пробіли
 				row.push(formattedValue);
 			});
 
@@ -61,30 +60,30 @@ async function drawFunc(tableData) {
 
 	// Функція для малювання тексту в клітинках з перенесенням рядків та вирівнюванням по центру
 	function drawText(text, x, y, width, height) {
-		const words = text.split(' ');
-		let line = '';
+		const lines = text.split('\n'); // Розділяємо текст за символом нової лінії
 		const lineHeight = fontSize * 1.2;
-		const lines = [];
-
-		for (let n = 0; n < words.length; n++) {
-			const testLine = line + words[n] + ' ';
-			const metrics = ctx.measureText(testLine);
-			const testWidth = metrics.width;
-
-			if (testWidth > width - cellPadding * 2 && n > 0) {
-				lines.push(line);
-				line = words[n] + ' ';
-			} else {
-				line = testLine;
-			}
-		}
-		lines.push(line);
 
 		// Початкові координати Y для верхнього кута
 		let startY = y + cellPadding;
 
 		for (const line of lines) {
-			ctx.fillText(line, x + cellPadding, startY); // Вирівнювання по лівому краю
+			let words = line.split(' ');
+			let currentLine = '';
+
+			for (let n = 0; n < words.length; n++) {
+				const testLine = currentLine + words[n] + ' ';
+				const testWidth = ctx.measureText(testLine).width;
+
+				if (testWidth > width - cellPadding * 2 && n > 0) {
+					ctx.fillText(currentLine, x + cellPadding, startY);
+					currentLine = words[n] + ' ';
+					startY += lineHeight;
+				} else {
+					currentLine = testLine;
+				}
+			}
+
+			ctx.fillText(currentLine, x + cellPadding, startY); // Малюємо останній рядок
 			startY += lineHeight;
 		}
 	}
