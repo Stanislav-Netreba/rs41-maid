@@ -2,7 +2,7 @@ const { timeArray } = require('../utils/config');
 const fs = require('fs');
 const { createCanvas } = require('canvas');
 
-async function drawScheduleTable(scheduleArray) {
+async function drawScheduleTable(scheduleArray, highlightedRow) {
 	// Часи, які потрібно включити у таблицю
 	const times = timeArray.slice(1);
 
@@ -35,35 +35,30 @@ async function drawScheduleTable(scheduleArray) {
 
 	const formattedSchedule = convertSchedule(scheduleArray);
 
-	return drawFunc(formattedSchedule);
+	return drawFunc(formattedSchedule, highlightedRow);
 }
 
-async function drawFunc(tableData) {
-	const fontSize = 24; // Збільшений розмір шрифту
+async function drawFunc(tableData, highlightedRow = -1) {
+	const fontSize = 24;
 	const font = `${fontSize}px Segoe UI`;
-	const cellPadding = 20; // Більший відступ
-	const cellHeight = 250; // Збільшена висота клітинки
-	const cellWidth = 350; // Збільшена ширина клітинки
-	const headerHeight = 70; // Висота заголовка
-	const tableWidth = cellWidth * tableData[0].length; // Ширина для годин + дні тижня
-	const tableHeight = headerHeight + cellHeight * (tableData.length - 1); // Висота для днів тижня
+	const cellPadding = 20;
+	const cellHeight = 250;
+	const cellWidth = 350;
+	const headerHeight = 70;
+	const tableWidth = cellWidth * tableData[0].length;
+	const tableHeight = headerHeight + cellHeight * (tableData.length - 1);
 
-	// Створення полотна
 	const canvas = createCanvas(tableWidth, tableHeight);
 	const ctx = canvas.getContext('2d');
 
-	// Стилі таблиці
 	ctx.fillStyle = '#ffffff';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.font = font;
-	ctx.textBaseline = 'top'; // Центрація по вертикалі
+	ctx.textBaseline = 'top';
 
-	// Функція для малювання тексту в клітинках з перенесенням рядків та вирівнюванням по центру
 	function drawText(text, x, y, width, height) {
-		const lines = text.split('\n'); // Розділяємо текст за символом нової лінії
+		const lines = text.split('\n');
 		const lineHeight = fontSize * 1.2;
-
-		// Початкові координати Y для верхнього кута
 		let startY = y + cellPadding;
 
 		for (const line of lines) {
@@ -83,18 +78,16 @@ async function drawFunc(tableData) {
 				}
 			}
 
-			ctx.fillText(currentLine, x + cellPadding, startY); // Малюємо останній рядок
+			ctx.fillText(currentLine, x + cellPadding, startY);
 			startY += lineHeight;
 		}
 	}
 
-	// Малювання таблиці
 	function drawTable(data) {
-		// Малювання заголовка таблиці (години)
 		ctx.fillStyle = '#007bff';
 		ctx.fillRect(0, 0, canvas.width, headerHeight);
 		ctx.fillStyle = '#ffffff';
-		ctx.textAlign = 'left'; // Центрація тексту по горизонталі
+		ctx.textAlign = 'left';
 
 		for (let i = 0; i < data[0].length; i++) {
 			const text = data[0][i];
@@ -102,15 +95,26 @@ async function drawFunc(tableData) {
 			drawText(text, x, 0, cellWidth, headerHeight);
 		}
 
-		// Малювання рядків таблиці (дні тижня)
 		for (let row = 1; row < data.length; row++) {
 			for (let col = 0; col < data[row].length; col++) {
 				const text = data[row][col];
 				const x = col * cellWidth;
 				const y = headerHeight + (row - 1) * cellHeight;
 
-				// Стилізація клітинок
-				ctx.fillStyle = row % 2 === 0 ? '#f9f9f9' : '#ffffff';
+				if (row === highlightedRow) {
+					if (col === 0) {
+						ctx.fillStyle = '#fff';
+					} else {
+						ctx.fillStyle = col % 2 === 0 ? '#ace2de' : '#80d1cb';
+					}
+				} else {
+					if (col === 0) {
+						ctx.fillStyle = '#fff';
+					} else {
+						ctx.fillStyle = row % 2 === 0 ? '#f9f9f9' : '#ffffff';
+					}
+				}
+
 				ctx.fillRect(x, y, cellWidth, cellHeight);
 				ctx.strokeStyle = '#dddddd';
 				ctx.strokeRect(x, y, cellWidth, cellHeight);
@@ -121,7 +125,6 @@ async function drawFunc(tableData) {
 		}
 	}
 
-	// Виклик функції для малювання таблиці
 	drawTable(tableData);
 	const buffer = canvas.toBuffer('image/png');
 	const fileName = `tempImg_${Date.now()}.png`;

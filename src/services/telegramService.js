@@ -23,13 +23,14 @@ class TelegramService {
 				}
 			},
 			'/schedule': async (msg, chatId) => {
+				const day = new Date().getDay();
 				const week = new Date().getWeek() % 2 === 0;
 
 				try {
 					let schedule = await this.scheduleScraper();
 					let currentSchedule = schedule[+week];
 
-					let filePath = await this.generateImageSchedule(currentSchedule);
+					let filePath = await this.generateImageSchedule(currentSchedule, day);
 					console.log('./src/temp/' + filePath);
 
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
@@ -42,7 +43,7 @@ class TelegramService {
 						}
 					});
 				} catch (error) {
-					await handleTelegramError(new CustomError('Error in /schedule command', 500), this.bot, chatId);
+					await handleTelegramError(new CustomError(error, 500), this.bot, chatId);
 				}
 			},
 			'/today': async (msg, chatId) => {
