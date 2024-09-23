@@ -40,16 +40,25 @@ async function drawScheduleTable(scheduleArray, highlightedRow) {
 
 function getCurrentLessonIndex(schedule) {
 	const currentTime = new Date();
-	const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+	const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes(); // Поточний час у хвилинах
 
 	for (let i = 0; i < schedule.length; i++) {
 		const [startHour, startMinute] = schedule[i].split(':').map(Number);
 
-		const startTime = startHour * 60 + startMinute;
-		const endTime = startTime + 95;
+		const startTime = startHour * 60 + startMinute; // Час початку пари
+		const endTime = startTime + 95; // Час закінчення пари (95 хвилин)
 
 		if (nowMinutes >= startTime && nowMinutes <= endTime) {
 			return i;
+		}
+
+		if (i < schedule.length - 1) {
+			const [nextStartHour, nextStartMinute] = schedule[i + 1].split(':').map(Number);
+			const nextStartTime = nextStartHour * 60 + nextStartMinute; // Початок наступної пари
+
+			if (nowMinutes > endTime && nowMinutes < nextStartTime) {
+				return [i + 1, -2]; // Повертаємо наступну пару і -2
+			}
 		}
 	}
 
@@ -124,6 +133,11 @@ async function drawFunc(tableData, highlightedRow = -1) {
 						ctx.fillStyle = '#fff';
 					} else if (col == getCurrentLessonIndex(timeArray)) {
 						ctx.fillStyle = '#b0d751';
+					} else if (
+						getCurrentLessonIndex(timeArray)[1] === -2 &&
+						col === getCurrentLessonIndex(timeArray)[0]
+					) {
+						ctx.fillStyle = '#ebcf81';
 					} else {
 						ctx.fillStyle = /* col % 2 === 0 ? */ '#ace2de' /* : '#80d1cb' */;
 					}
