@@ -14,7 +14,10 @@ class TelegramService {
 		this.commandHandlers = {
 			'/start': async (msg, chatId) => {
 				try {
-					await this.bot.sendMessage(chatId, 'Welcome message');
+					await this.bot.sendMessage(
+						chatId,
+						'Фіот підари, хімікі підари, згурич підар, ксу іді нахуй, турчин топ 1 фембой світу'
+					);
 				} catch (error) {
 					await handleTelegramError(new CustomError('Error in /start command', 500), this.bot, chatId);
 				}
