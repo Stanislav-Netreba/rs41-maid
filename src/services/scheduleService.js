@@ -38,6 +38,24 @@ async function drawScheduleTable(scheduleArray, highlightedRow) {
 	return drawFunc(formattedSchedule, highlightedRow);
 }
 
+function getCurrentLessonIndex(schedule) {
+	const currentTime = new Date();
+	const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+	for (let i = 0; i < schedule.length; i++) {
+		const [startHour, startMinute] = schedule[i].split(':').map(Number);
+
+		const startTime = startHour * 60 + startMinute;
+		const endTime = startTime + 95;
+
+		if (nowMinutes >= startTime && nowMinutes <= endTime) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 async function drawFunc(tableData, highlightedRow = -1) {
 	const fontSize = 24;
 	const font = `${fontSize}px Segoe UI`;
@@ -104,8 +122,10 @@ async function drawFunc(tableData, highlightedRow = -1) {
 				if (row === highlightedRow) {
 					if (col === 0) {
 						ctx.fillStyle = '#fff';
+					} else if (col == getCurrentLessonIndex(timeArray)) {
+						ctx.fillStyle = '#b0d751';
 					} else {
-						ctx.fillStyle = col % 2 === 0 ? '#ace2de' : '#80d1cb';
+						ctx.fillStyle = /* col % 2 === 0 ? */ '#ace2de' /* : '#80d1cb' */;
 					}
 				} else {
 					if (col === 0) {
