@@ -54,7 +54,7 @@ class TelegramService {
 					let schedule = await this.scheduleScraper();
 					let currentSchedule = schedule[+week];
 
-					let filePath = await this.generateImageSchedule([currentSchedule[day]]);
+					let filePath = await this.generateImageSchedule([currentSchedule[day]], day);
 					console.log('./src/temp/' + filePath);
 
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
