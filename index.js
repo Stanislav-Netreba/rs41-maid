@@ -1,7 +1,11 @@
+const express = require('express');
 const discordService = require('./src/services/discordService');
 const TelegramService = require('./src/services/telegramService');
 const scheduleScraper = require('./src/services/scheduleScraper');
 const generateImageSchedule = require('./src/services/scheduleService');
+const { errorHandler, CustomError } = require('./src/utils/errorHandler');
+
+const app = express();
 
 Date.prototype.getWeek = function () {
 	var date = new Date(this.getTime());
@@ -20,8 +24,10 @@ async function startBot() {
 		console.log('Telegram bot started');
 		telegramService.commands();
 	} catch (error) {
-		console.error('Error starting bot:', error);
+		throw new CustomError('Error starting bot: ' + error.message, 500);
 	}
 }
 
 startBot();
+
+app.use(errorHandler);
