@@ -2,7 +2,7 @@ const { timeArray } = require('../utils/config');
 const fs = require('fs');
 const { createCanvas } = require('canvas');
 
-async function drawScheduleTable(scheduleArray, highlightedRow) {
+async function drawScheduleTable(scheduleArray, highlightedRow, currentDay) {
 	// Часи, які потрібно включити у таблицю
 	const times = timeArray.slice(1);
 
@@ -35,7 +35,7 @@ async function drawScheduleTable(scheduleArray, highlightedRow) {
 
 	const formattedSchedule = convertSchedule(scheduleArray);
 
-	return drawFunc(formattedSchedule, highlightedRow);
+	return drawFunc(formattedSchedule, highlightedRow, currentDay);
 }
 
 function getCurrentLessonIndex(schedule) {
@@ -65,7 +65,7 @@ function getCurrentLessonIndex(schedule) {
 	return -1;
 }
 
-async function drawFunc(tableData, highlightedRow = -1) {
+async function drawFunc(tableData, highlightedRow = -1, currentDay = true) {
 	const fontSize = 24;
 	const font = `${fontSize}px Segoe UI`;
 	const cellPadding = 20;
@@ -128,7 +128,7 @@ async function drawFunc(tableData, highlightedRow = -1) {
 				const x = col * cellWidth;
 				const y = headerHeight + (row - 1) * cellHeight;
 
-				if (row === highlightedRow) {
+				if (row === highlightedRow && currentDay) {
 					if (col === 0) {
 						ctx.fillStyle = '#fff';
 					} else if (col == getCurrentLessonIndex(timeArray)) {

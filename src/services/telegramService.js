@@ -47,14 +47,18 @@ class TelegramService {
 				}
 			},
 			'/today': async (msg, chatId) => {
-				const day = new Date().getDay();
+				let day = new Date().getDay() == 0 ? 1 : new Date().getDay();
 				const week = new Date().getWeek() % 2 === 0;
 
 				try {
 					let schedule = await this.scheduleScraper();
 					let currentSchedule = schedule[+week];
 
-					let filePath = await this.generateImageSchedule([currentSchedule[day]], day);
+					let filePath = await this.generateImageSchedule(
+						[currentSchedule[day]],
+						day,
+						day == new Date().getDay()
+					);
 					console.log('./src/temp/' + filePath);
 
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
@@ -67,7 +71,7 @@ class TelegramService {
 						}
 					});
 				} catch (error) {
-					await handleTelegramError(new CustomError('Error in /today command', 500), this.bot, chatId);
+					await console.log(error);
 				}
 			},
 		};
