@@ -33,8 +33,26 @@ class TelegramService {
 					let filePath = await this.generateImageSchedule(currentSchedule, day);
 					console.log('./src/temp/' + filePath);
 
+					let caption;
+
+					if (day == 3) {
+						caption = `Середа:
+#АГЛА - https://t.me/c/2172549396/240/242
+#Начерт - https://t.me/c/2172549396/240/241
+#Фізос - https://t.me/c/2172549396/240/243`;
+					} else if (day == 4) {
+						caption = `Четвер:
+#УМПС - https://t.me/c/2172549396/240/247
+#Інформатика - https://t.me/c/2172549396/240/244
+#МатАналіз - https://t.me/c/2172549396/240/245
+#ОЗСЖ - https://t.me/c/2172549396/240/246`;
+					} else {
+						caption = '';
+					}
+
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
 						contentType: 'image/png',
+						caption,
 					});
 
 					fs.unlink('./src/temp/' + filePath, (err) => {
