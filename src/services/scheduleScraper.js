@@ -2,9 +2,9 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { schedulesUrl, timeArray } = require('../utils/config');
 
-async function scrapeScheduleFunc(scheduleId) {
+async function scrapeScheduleFunc(scheduleId, group) {
 	try {
-		const { data } = await axios.get(schedulesUrl);
+		const { data } = await axios.get(schedulesUrl[group]);
 		const $ = cheerio.load(data);
 		const scheduleTable = $(scheduleId);
 
@@ -44,10 +44,10 @@ async function scrapeScheduleFunc(scheduleId) {
 	}
 }
 
-async function scrapeScheduleReturn() {
+async function scrapeScheduleReturn(group) {
 	return [
-		await scrapeScheduleFunc('#ctl00_MainContent_SecondScheduleTable'),
-		await scrapeScheduleFunc('#ctl00_MainContent_FirstScheduleTable'),
+		await scrapeScheduleFunc('#ctl00_MainContent_SecondScheduleTable', group),
+		await scrapeScheduleFunc('#ctl00_MainContent_FirstScheduleTable', group),
 	];
 }
 

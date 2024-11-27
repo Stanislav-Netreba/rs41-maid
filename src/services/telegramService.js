@@ -1,8 +1,20 @@
 process.env.NTBA_FIX_350 = 1;
 const TelegramBot = require('node-telegram-bot-api');
 const { telegramToken } = require('../utils/config');
+const { Keyboard, Key } = require('telegram-keyboard');
 const fs = require('fs');
 const { CustomError, handleTelegramError } = require('../utils/errorHandler');
+const captionText = {
+	3: `Середа:
+#АГЛА - https://t.me/c/2172549396/240/242
+#Начерт - https://t.me/c/2172549396/240/241
+#Фізос - https://t.me/c/2172549396/240/243`,
+	4: `Четвер:
+#УМПС - https://t.me/c/2172549396/240/247
+#Інформатика - https://t.me/c/2172549396/240/244
+#МатАналіз - https://t.me/c/2172549396/240/245
+#ОЗСЖ - https://t.me/c/2172549396/240/246`,
+};
 
 class TelegramService {
 	constructor(discordService, generateImageSchedule, scheduleScraper) {
@@ -23,28 +35,76 @@ class TelegramService {
 				}
 			},
 			'/schedule': async (msg, chatId) => {
+				const keyboard = Keyboard.make(
+					[
+						Key.callback('РС-41', 'schedulers41'),
+						Key.callback('РС-42', 'schedulers42'),
+						Key.callback('РІ-41', 'scheduleri41'),
+						Key.callback('РЕ-41', 'schedulere41'),
+						Key.callback('РБ-41', 'schedulerb41'),
+						Key.callback('РБ-42', 'schedulerb42'),
+						Key.callback('РБ-43', 'schedulerb43'),
+					],
+					{
+						pattern: [2, 2, 3],
+					}
+				);
+
+				await this.bot.sendMessage(msg.chat.id, 'Вибери свою групу', keyboard.inline());
+			},
+			'/today': async (msg, chatId) => {
+				const keyboard = Keyboard.make(
+					[
+						Key.callback('РС-41', 'todayrs41'),
+						Key.callback('РС-42', 'todayrs42'),
+						Key.callback('РІ-41', 'todayri41'),
+						Key.callback('РЕ-41', 'todayre41'),
+						Key.callback('РБ-41', 'todayrb41'),
+						Key.callback('РБ-42', 'todayrb42'),
+						Key.callback('РБ-43', 'todayrb43'),
+					],
+					{
+						pattern: [2, 2, 3],
+					}
+				);
+
+				await this.bot.sendMessage(msg.chat.id, 'Вибери свою групу', keyboard.inline());
+			},
+			'/lectures': async (msg, chatId) => {
+				await this.bot.sendMessage(chatId, 'Для переляду записів лекцій: https://t.me/+bDYe3NwzD30yNjcy');
+			},
+			'/test': async (msg, chatId) => {
+				await this.bot.sendMessage(msg.chat.id, 'Піся попа');
+			},
+		};
+	}
+
+	init() {
+		this.bot.on('callback_query', async (msg) => {
+			await this.bot.answerCallbackQuery(msg.id);
+			await this.bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
+
+			const groupNames = {
+				rs41: 'РС-41',
+				rs42: 'РС-42',
+				ri41: 'РІ-41',
+				re41: 'РЕ-41',
+				rb41: 'РБ-41',
+				rb42: 'РБ-43',
+				rb43: 'РБ-43',
+			};
+
+			const chatId = msg.message.chat.id;
+
+			if (msg.data.startsWith('schedule')) {
+				let group = msg.data.replace('schedule', '');
 				const day = new Date().getDay();
 				const week = new Date().getWeek() % 2 === 0;
 
-				let caption;
-
-				if (day == 3) {
-					caption = `Середа:
-#АГЛА - https://t.me/c/2172549396/240/242
-#Начерт - https://t.me/c/2172549396/240/241
-#Фізос - https://t.me/c/2172549396/240/243`;
-				} else if (day == 4) {
-					caption = `Четвер:
-#УМПС - https://t.me/c/2172549396/240/247
-#Інформатика - https://t.me/c/2172549396/240/244
-#МатАналіз - https://t.me/c/2172549396/240/245
-#ОЗСЖ - https://t.me/c/2172549396/240/246`;
-				} else {
-					caption = '';
-				}
+				let caption = `Група ${groupNames[group]}\n\n` + (captionText[day] || 'Сьогодні без лекцій');
 
 				try {
-					let schedule = await this.scheduleScraper();
+					let schedule = await this.scheduleScraper(group);
 					let currentSchedule = schedule[+week];
 
 					let filePath = await this.generateImageSchedule(currentSchedule, day);
@@ -63,30 +123,16 @@ class TelegramService {
 				} catch (error) {
 					await handleTelegramError(new CustomError(error, 500), this.bot, chatId);
 				}
-			},
-			'/today': async (msg, chatId) => {
+			} else if (msg.data.startsWith('today')) {
+				let group = msg.data.replace('today', '');
+
 				let day = new Date().getDay() == 0 ? 1 : new Date().getDay();
 				const week = new Date().getWeek() % 2 === 0;
 
-				let caption;
-
-				if (day == 3) {
-					caption = `Середа:
-#АГЛА - https://t.me/c/2172549396/240/242
-#Начерт - https://t.me/c/2172549396/240/241
-#Фізос - https://t.me/c/2172549396/240/243`;
-				} else if (day == 4) {
-					caption = `Четвер:
-#УМПС - https://t.me/c/2172549396/240/247
-#Інформатика - https://t.me/c/2172549396/240/244
-#МатАналіз - https://t.me/c/2172549396/240/245
-#ОЗСЖ - https://t.me/c/2172549396/240/246`;
-				} else {
-					caption = '';
-				}
+				let caption = captionText[day] || 'Сьогодні без лекцій';
 
 				try {
-					let schedule = await this.scheduleScraper();
+					let schedule = await this.scheduleScraper(group);
 					let currentSchedule = schedule[+week];
 
 					let filePath = await this.generateImageSchedule(
@@ -109,11 +155,8 @@ class TelegramService {
 				} catch (error) {
 					await console.log(error);
 				}
-			},
-		};
-	}
-
-	init() {
+			}
+		});
 		this.bot.on('channel_post', async (msg) => {
 			const chatId = msg.chat.id;
 			try {
