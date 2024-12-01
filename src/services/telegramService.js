@@ -1,5 +1,6 @@
 process.env.NTBA_FIX_350 = 1;
 const TelegramBot = require('node-telegram-bot-api');
+const electricitySchedule = require('./electricityService');
 const { telegramToken } = require('../utils/config');
 const { Keyboard, Key } = require('telegram-keyboard');
 const fs = require('fs');
@@ -15,6 +16,36 @@ const captionText = {
 #МатАналіз - https://t.me/c/2172549396/240/245
 #ОЗСЖ - https://t.me/c/2172549396/240/246`,
 };
+
+function mergeOutages(data) {
+	const result = {};
+
+	for (const day in data) {
+		if (!data[day] || data[day].length === 0) {
+			result[day] = [];
+			continue;
+		}
+
+		const periods = data[day].sort((a, b) => a.start - b.start);
+		const merged = [];
+		let currentPeriod = [periods[0].start, periods[0].end];
+
+		for (let i = 1; i < periods.length; i++) {
+			const { start, end } = periods[i];
+			if (start <= currentPeriod[1]) {
+				currentPeriod[1] = Math.max(currentPeriod[1], end);
+			} else {
+				merged.push(currentPeriod);
+				currentPeriod = [start, end];
+			}
+		}
+
+		merged.push(currentPeriod);
+		result[day] = merged;
+	}
+
+	return result;
+}
 
 class TelegramService {
 	constructor(discordService, generateImageSchedule, scheduleScraper) {
@@ -72,6 +103,25 @@ class TelegramService {
 			},
 			'/lectures': async (msg, chatId) => {
 				await this.bot.sendMessage(chatId, 'Для переляду записів лекцій: https://t.me/+bDYe3NwzD30yNjcy');
+			},
+			'/electricity': async (msg, chatId) => {
+				const data = await electricitySchedule();
+
+				const group1 = mergeOutages(data[0].groups)['1'];
+
+				let answerText = '';
+				if (group1.length === 0) {
+					answerText = 'відключення світла не буде';
+				} else {
+					answerText = 'відключення проводяться:\n';
+					for (const [start, end] of group1) {
+						const startText = `з ${start}:00`;
+						const endText = `до ${end}:00`;
+						answerText += `${startText} ${endText}\n`;
+					}
+				}
+
+				await this.bot.sendMessage(msg.chat.id, `Сьогодні ${answerText}`);
 			},
 			'/test': async (msg, chatId) => {
 				await this.bot.sendMessage(msg.chat.id, 'Піся попа');
