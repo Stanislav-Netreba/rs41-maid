@@ -7,15 +7,18 @@ const fs = require('fs');
 const { CustomError, handleTelegramError } = require('../utils/errorHandler');
 const captionText = {
 	3: `Середа:
-#АГЛА - https://t.me/c/2172549396/240/242
-#Начерт - https://t.me/c/2172549396/240/241
-#Фізос - https://t.me/c/2172549396/240/243`,
+  #Історія - <a href="https://t.me/c/2172549396/240/541">Історія науки і техніки</a> [1 тиждень]
+  #Метрологія - Метрологія [2 тиждень]
+  #Фізос - <a href="https://t.me/c/2172549396/240/243">Фізика</a>
+  #МатАналіз - <a href="https://t.me/c/2172549396/240/245">Математичний Аналіз та Теорія Ймовірностей</a> [2 тиждень]
+  #ОТК - <a href="https://t.me/c/2172549396/240/540">Основи теорії кіл</a>`,
+
 	4: `Четвер:
-#УМПС - https://t.me/c/2172549396/240/247
-#Інформатика - https://t.me/c/2172549396/240/244
-#МатАналіз - https://t.me/c/2172549396/240/245
-#ОЗСЖ - https://t.me/c/2172549396/240/246`,
+  #МатАналіз - <a href="https://t.me/c/2172549396/240/245">Математичний Аналіз та Теорія Ймовірностей</a>
+  #Інформатика - <a href="https://t.me/c/2172549396/240/572">Інформатика</a>
+  #Фізос - <a href="https://t.me/c/2172549396/240/243">Фізика</a>`,
 };
+
 
 function mergeOutages(data) {
 	const result = {};
@@ -72,12 +75,10 @@ class TelegramService {
 						Key.callback('РС-42', 'schedulers42'),
 						Key.callback('РІ-41', 'scheduleri41'),
 						Key.callback('РЕ-41', 'schedulere41'),
-						Key.callback('РБ-41', 'schedulerb41'),
-						Key.callback('РБ-42', 'schedulerb42'),
-						Key.callback('РБ-43', 'schedulerb43'),
+						Key.callback('РБ-41/42/43', 'schedulerb41'),
 					],
 					{
-						pattern: [2, 2, 3],
+						pattern: [2, 2, 1],
 					}
 				);
 
@@ -104,25 +105,6 @@ class TelegramService {
 			'/lectures': async (msg, chatId) => {
 				await this.bot.sendMessage(chatId, 'Для переляду записів лекцій: https://t.me/+bDYe3NwzD30yNjcy');
 			},
-			'/electricity': async (msg, chatId) => {
-				const data = await electricitySchedule();
-
-				const group1 = mergeOutages(data[0].groups)['1'];
-
-				let answerText = '';
-				if (group1.length === 0) {
-					answerText = 'відключення світла не буде';
-				} else {
-					answerText = 'відключення проводяться:\n';
-					for (const [start, end] of group1) {
-						const startText = `з ${start}:00`;
-						const endText = `до ${end}:00`;
-						answerText += `${startText} ${endText}\n`;
-					}
-				}
-
-				await this.bot.sendMessage(msg.chat.id, `Сьогодні ${answerText}`);
-			},
 			'/test': async (msg, chatId) => {
 				await this.bot.sendMessage(msg.chat.id, 'Піся попа');
 			},
@@ -139,9 +121,9 @@ class TelegramService {
 				rs42: 'РС-42',
 				ri41: 'РІ-41',
 				re41: 'РЕ-41',
-				rb41: 'РБ-41',
-				rb42: 'РБ-43',
-				rb43: 'РБ-43',
+				rb41: 'РБ-41/42/43',
+				// rb42: 'РБ-43',
+				// rb43: 'РБ-43',
 			};
 
 			const chatId = msg.message.chat.id;
@@ -163,6 +145,7 @@ class TelegramService {
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
 						contentType: 'image/png',
 						caption,
+						parse_mode: 'HTML'
 					});
 
 					fs.unlink('./src/temp/' + filePath, (err) => {
@@ -195,6 +178,7 @@ class TelegramService {
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
 						contentType: 'image/png',
 						caption,
+						parse_mode: 'HTML'
 					});
 
 					fs.unlink('./src/temp/' + filePath, (err) => {
@@ -203,7 +187,7 @@ class TelegramService {
 						}
 					});
 				} catch (error) {
-					await console.log(error);
+					await handleTelegramError(new CustomError(error, 500), this.bot, chatId);
 				}
 			}
 		});
