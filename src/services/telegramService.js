@@ -19,6 +19,8 @@ const captionText = {
   #Фізос - <a href="https://t.me/c/2172549396/240/243">Фізика</a>`,
 };
 
+const adminUserId = 891914973;
+let groupChats = new Set();
 
 function mergeOutages(data) {
 	const result = {};
@@ -108,10 +110,38 @@ class TelegramService {
 			'/test': async (msg, chatId) => {
 				await this.bot.sendMessage(msg.chat.id, 'Піся попа');
 			},
+			'/groups': async (msg, chatId) => {
+				console.log(msg.from.id !== adminUserId)
+				// Перевірка, чи є користувач адміністратором
+				if (msg.from.id !== adminUserId) return;
+
+				let groupsList = Array.from(groupChats);
+				if (groupsList.length === 0) {
+					return this.bot.sendMessage(msg.chat.id, 'Бот ще не виявив жодної групи.');
+				}
+
+				let groupInfo = [];
+				for (const chatId of groupsList) {
+					try {
+						const chat = await this.bot.getChat(chatId);
+						groupInfo.push(`• ${chat.title} (${chat.id})`);
+					} catch (error) {
+						console.log(`Не вдалося отримати інформацію про групу ${chatId}:`, error.message);
+					}
+				}
+
+				this.bot.sendMessage(msg.chat.id, `Бот є учасником таких груп:\n\n${groupInfo.join('\n')}`);
+
+			}
 		};
 	}
 
 	init() {
+		this.bot.on('message', async (msg) => {
+			if ((msg.chat.type === 'group' || msg.chat.type === 'supergroup') && !groupChats.has(msg.chat.id)) {
+				groupChats.add(msg.chat.id);
+			}
+		});
 		this.bot.on('callback_query', async (msg) => {
 			await this.bot.answerCallbackQuery(msg.id);
 			await this.bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
@@ -191,50 +221,50 @@ class TelegramService {
 				}
 			}
 		});
-		this.bot.on('channel_post', async (msg) => {
-			const chatId = msg.chat.id;
-			try {
-				let postContent = msg.text || msg.caption || '';
-				const mediaFiles = [];
-
-				if (msg.photo) {
-					let result = [];
-					for (let i = 2; i < msg.photo.length; i += 3) {
-						result.push(msg.photo[i]);
-					}
-
-					msg.photo = result;
-
-					for (let photo of msg.photo) {
-						const photoId = photo.file_id;
-						const photoUrl = await this.bot.getFileLink(photoId);
-						const fileSize = photo.file_size;
-						if (fileSize <= 15 * 1024 * 1024) {
-							mediaFiles.push({ type: 'photo', url: photoUrl });
-						}
-					}
-				}
-				if (msg.video) {
-					const videoUrl = await this.bot.getFileLink(msg.video.file_id);
-					const fileSize = msg.video.file_size;
-
-					if (fileSize <= 15 * 1024 * 1024) {
-						mediaFiles.push({ type: 'video', url: videoUrl });
-					}
-				}
-				if (msg.document) {
-					const docUrl = await this.bot.getFileLink(msg.document.file_id);
-					const fileSize = msg.document.file_size;
-
-					if (fileSize <= 15 * 1024 * 1024) {
-						mediaFiles.push({ type: 'document', url: docUrl, fileName: msg.document.file_name });
-					}
-				}
-				await this.discordService.sendFullPostToDiscord(postContent, mediaFiles);
-			} catch (error) {
-				await handleTelegramError(new CustomError('Error in channel post', 500), this.bot, chatId);
-			}
-		});
+		// this.bot.on('channel_post', async (msg) => {
+		// 	const chatId = msg.chat.id;
+		// 	try {
+		// 		let postContent = msg.text || msg.caption || '';
+		// 		const mediaFiles = [];
+		//
+		// 		if (msg.photo) {
+		// 			let result = [];
+		// 			for (let i = 2; i < msg.photo.length; i += 3) {
+		// 				result.push(msg.photo[i]);
+		// 			}
+		//
+		// 			msg.photo = result;
+		//
+		// 			for (let photo of msg.photo) {
+		// 				const photoId = photo.file_id;
+		// 				const photoUrl = await this.bot.getFileLink(photoId);
+		// 				const fileSize = photo.file_size;
+		// 				if (fileSize <= 15 * 1024 * 1024) {
+		// 					mediaFiles.push({ type: 'photo', url: photoUrl });
+		// 				}
+		// 			}
+		// 		}
+		// 		if (msg.video) {
+		// 			const videoUrl = await this.bot.getFileLink(msg.video.file_id);
+		// 			const fileSize = msg.video.file_size;
+		//
+		// 			if (fileSize <= 15 * 1024 * 1024) {
+		// 				mediaFiles.push({ type: 'video', url: videoUrl });
+		// 			}
+		// 		}
+		// 		if (msg.document) {
+		// 			const docUrl = await this.bot.getFileLink(msg.document.file_id);
+		// 			const fileSize = msg.document.file_size;
+		//
+		// 			if (fileSize <= 15 * 1024 * 1024) {
+		// 				mediaFiles.push({ type: 'document', url: docUrl, fileName: msg.document.file_name });
+		// 			}
+		// 		}
+		// 		await this.discordService.sendFullPostToDiscord(postContent, mediaFiles);
+		// 	} catch (error) {
+		// 		await handleTelegramError(new CustomError('Error in channel post', 500), this.bot, chatId);
+		// 	}
+		// });
 	}
 
 	commands() {
