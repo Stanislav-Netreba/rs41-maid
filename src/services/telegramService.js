@@ -161,16 +161,21 @@ class TelegramService {
 			if (msg.data.startsWith('schedule')) {
 				let group = msg.data.replace('schedule', '');
 				const day = new Date().getDay();
-				const week = new Date().getWeek() % 2 === 0;
+				let week = new Date().getWeek() % 2;
 
-				let caption = `Група ${groupNames[group]}\n\n` + (captionText[day] || 'Сьогодні без лекцій');
 
 				try {
 					let schedule = await this.scheduleScraper(group);
+					if(day == 0){
+						week = !week;
+					}
+
 					let currentSchedule = schedule[+week];
 
 					let filePath = await this.generateImageSchedule(currentSchedule, day);
 					console.log('./src/temp/' + filePath);
+
+					let caption = `Група ${groupNames[group]}, Тиждень ${week+1}\n\n` + (captionText[day] || 'Сьогодні без лекцій');
 
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
 						contentType: 'image/png',
@@ -189,21 +194,25 @@ class TelegramService {
 			} else if (msg.data.startsWith('today')) {
 				let group = msg.data.replace('today', '');
 
-				let day = new Date().getDay() == 0 ? 1 : new Date().getDay();
-				const week = new Date().getWeek() % 2 === 0;
-
-				let caption = captionText[day] || 'Сьогодні без лекцій';
+				let day = new Date().getDay();
+				let week = new Date().getWeek() % 2;
 
 				try {
 					let schedule = await this.scheduleScraper(group);
+					if(day == 0){
+						day = 1;
+						week = !week;
+					}
 					let currentSchedule = schedule[+week];
+
 
 					let filePath = await this.generateImageSchedule(
 						[currentSchedule[day]],
-						day,
-						day == new Date().getDay()
+						day
 					);
 					console.log('./src/temp/' + filePath);
+
+					let caption = `Група ${groupNames[group]}, Тиждень ${week+1}\n\n` + (captionText[day] || 'Сьогодні без лекцій');
 
 					await this.bot.sendPhoto(chatId, fs.createReadStream('./src/temp/' + filePath), {
 						contentType: 'image/png',

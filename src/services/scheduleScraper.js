@@ -46,8 +46,8 @@ async function scrapeScheduleFunc(scheduleId, group) {
 
 async function scrapeScheduleReturn(group) {
 	return [
-		await scrapeScheduleFunc('#ctl00_MainContent_SecondScheduleTable', group),
 		await scrapeScheduleFunc('#ctl00_MainContent_FirstScheduleTable', group),
+		await scrapeScheduleFunc('#ctl00_MainContent_SecondScheduleTable', group),
 	];
 }
 
