@@ -4,7 +4,8 @@ const { schedulesUrl, timeArray } = require('../utils/config');
 
 async function scrapeScheduleFunc(scheduleId, group) {
 	try {
-		const { data } = await axios.get(schedulesUrl[group]);
+		const response = await axios.get(schedulesUrl[group], { timeout: 5000 });
+		const data = response.data;
 		const $ = cheerio.load(data);
 		const scheduleTable = $(scheduleId);
 
@@ -36,11 +37,18 @@ async function scrapeScheduleFunc(scheduleId, group) {
 			return obj;
 		});
 
-		// Повертаємо структуру з об'єктами
 		return formattedSchedule;
 	} catch (error) {
-		console.error('Error while scraping schedule:', error);
-		return { error: 'Failed to retrieve schedule' };
+		if (error.response) {
+			console.error(`HTTP Error ${error.response.status}: ${error.response.statusText}`);
+			return { error: `HTTP Error ${error.response.status}: ${error.response.statusText}` };
+		} else if (error.request) {
+			console.error('Network error: No response received from the server');
+			return { error: 'Network error: No response received from the server' };
+		} else {
+			console.error('Error while scraping schedule:', error.message);
+			return { error: `Failed to retrieve schedule: ${error.message}` };
+		}
 	}
 }
 
