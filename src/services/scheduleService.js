@@ -136,7 +136,24 @@ async function drawFunc(tableData, highlightedRow = -1, currentDay = true) {
 				if (col === 0) {
 					ctx.fillStyle = '#f4cc70'; // Теплий жовто-оранжевий для першого стовпчика
 				} else {
-					ctx.fillStyle = row % 2 === 0 ? '#f9f9f9' : '#ffffff'; // Чергування кольорів
+					if (col === highlightedRow && currentDay) {
+						if (row == getCurrentLessonIndex(timeArray)) {
+							ctx.fillStyle = '#b0d751';
+						} else if (
+							getCurrentLessonIndex(timeArray)[1] === -2 &&
+							row === getCurrentLessonIndex(timeArray)[0]
+						) {
+							ctx.fillStyle = '#ebcf81';
+						} else {
+							ctx.fillStyle = /* col % 2 === 0 ? */ '#ace2de' /* : '#80d1cb' */;
+						}
+					} else {
+						if (col === 0) {
+							ctx.fillStyle = '#fff';
+						} else {
+							ctx.fillStyle = row % 2 === 0 ? '#f9f9f9' : '#ffffff';
+						}
+					}
 				}
 
 				// Малюємо клітинку
