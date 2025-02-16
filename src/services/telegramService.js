@@ -64,7 +64,7 @@ class TelegramService {
 				try {
 					await this.bot.sendMessage(
 						chatId,
-						'Фіот підари, хімікі підари, згурич підар, ксу іді нахуй, турчин топ 1 фембой світу'
+						'Пані та панове, ви занотували?'
 					);
 				} catch (error) {
 					await handleTelegramError(new CustomError('Error in /start command', 500), this.bot, chatId);
