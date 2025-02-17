@@ -1,7 +1,7 @@
 process.env.NTBA_FIX_350 = 1;
 const TelegramBot = require('node-telegram-bot-api');
 const electricitySchedule = require('./electricityService');
-const { telegramToken } = require('../utils/config');
+const { telegramToken, groupNames } = require('../utils/config');
 const { Keyboard, Key } = require('telegram-keyboard');
 const fs = require('fs');
 const { CustomError, handleTelegramError } = require('../utils/errorHandler');
@@ -145,16 +145,6 @@ class TelegramService {
 		this.bot.on('callback_query', async (msg) => {
 			await this.bot.answerCallbackQuery(msg.id);
 			await this.bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
-
-			const groupNames = {
-				rs41: 'РС-41',
-				rs42: 'РС-42',
-				ri41: 'РІ-41',
-				re41: 'РЕ-41',
-				rb41: 'РБ-41/42/43',
-				// rb42: 'РБ-43',
-				// rb43: 'РБ-43',
-			};
 
 			const chatId = msg.message.chat.id;
 
