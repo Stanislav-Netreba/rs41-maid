@@ -1,8 +1,8 @@
-const { timeArray } = require('../utils/config');
+const { timeArray, groupNames } = require('../utils/config');
 const fs = require('fs');
 const { createCanvas } = require('canvas');
 
-async function drawScheduleTable(scheduleArray, highlightedRow, currentDay) {
+async function drawScheduleTable(scheduleArray, highlightedRow, currentDay, group) {
 	const times = timeArray.slice(1);
 	const header = ['#', ...times];
 
@@ -26,7 +26,7 @@ async function drawScheduleTable(scheduleArray, highlightedRow, currentDay) {
 	}
 
 	const formattedSchedule = convertSchedule(scheduleArray);
-	return drawFunc(formattedSchedule, highlightedRow, currentDay);
+	return drawFunc(formattedSchedule, highlightedRow, currentDay, groupNames[group]);
 }
 
 function getCurrentLessonIndex(schedule) {
@@ -50,22 +50,23 @@ function getCurrentLessonIndex(schedule) {
 	return -1;
 }
 
-async function drawFunc(tableData, highlightedRow = -1, currentDay = true) {
+async function drawFunc(tableData, highlightedRow = -1, currentDay = true, group) {
 	const fontSize = 24;
 	const font = `${fontSize}px Segoe UI`;
 	const cellPadding = 20;
 	const cellHeight = 250;
 	const cellWidth = 350;
 	const headerHeight = 100;
+	const footerHeight = 45;
 	const tableWidth = headerHeight + cellWidth * (tableData[0].length - 1);
-	const tableHeight = headerHeight + cellHeight * (tableData.length - 1);
+	const tableHeight = headerHeight + cellHeight * (tableData.length - 1) + footerHeight;
 	const canvas = createCanvas(tableWidth, tableHeight);
 	const ctx = canvas.getContext('2d');
 
 	ctx.fillStyle = '#ffffff';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.font = font;
-	ctx.textBaseline = 'top';
+	ctx.textBaseline = 'middle';
 
 	function drawText(text, x, y, width, height) {
 		const lines = text.split('\n');
@@ -166,6 +167,13 @@ async function drawFunc(tableData, highlightedRow = -1, currentDay = true) {
 				drawText(text, x, y, columnWidth, cellHeight);
 			}
 		}
+		ctx.fillStyle = '#cccccc';
+		ctx.fillRect(0, tableHeight - footerHeight, tableWidth, footerHeight);
+
+		// Добавляем текст группы внизу полоски
+		ctx.fillStyle = '#000000';
+		ctx.textAlign = 'right';
+		ctx.fillText(`Група: ${group}`, tableWidth - 20, tableHeight - fontSize);
 	}
 
 

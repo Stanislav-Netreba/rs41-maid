@@ -93,12 +93,12 @@ class TelegramService {
 						Key.callback('РС-42', 'todayrs42'),
 						Key.callback('РІ-41', 'todayri41'),
 						Key.callback('РЕ-41', 'todayre41'),
-						Key.callback('РБ-41', 'todayrb41'),
-						Key.callback('РБ-42', 'todayrb42'),
-						Key.callback('РБ-43', 'todayrb43'),
+						Key.callback('РБ-41/42/43', 'todayrb41'),
+						// Key.callback('РБ-42', 'todayrb42'),
+						// Key.callback('РБ-43', 'todayrb43'),
 					],
 					{
-						pattern: [2, 2, 3],
+						pattern: [2, 2, 1],
 					}
 				);
 
@@ -171,8 +171,8 @@ class TelegramService {
 					}
 
 					let currentSchedule = schedule[+week];
-
-					let filePath = await this.generateImageSchedule(currentSchedule, day);
+					console.log(group);
+					let filePath = await this.generateImageSchedule(currentSchedule, day, null, group = group);
 					console.log('./src/temp/' + filePath);
 
 					let caption = `Група ${groupNames[group]}, Тиждень ${week+1}\n\n` + (captionText[day] || 'Сьогодні без лекцій');
@@ -208,7 +208,9 @@ class TelegramService {
 
 					let filePath = await this.generateImageSchedule(
 						[currentSchedule[day]],
-						day
+						day,
+						null,
+						group
 					);
 					console.log('./src/temp/' + filePath);
 
